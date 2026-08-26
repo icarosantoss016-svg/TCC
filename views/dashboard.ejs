@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel - Gestão de EPIs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/dashboard">Gestão de EPIs</a>
+            <div class="navbar-nav me-auto">
+                <a class="nav-link text-white" href="/dashboard">Painel de Infrações</a>
+                <a class="nav-link text-white fw-bold active" href="/setores">Gerenciar Setores</a>
+            </div>
+            <button class="btn btn-danger btn-sm" id="btnSair">Sair</button>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h2 class="text-secondary">Visão Geral</h2>
+        <hr>
+        <div class="row mb-5">
+
+            <div class="col-md-3">
+                <div class="card text-white bg-primary shadow-sm h-100">
+                    <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                        <h6 class="card-title text-uppercase fw-bold">Total de Leituras</h6>
+                        <h2 class="card-text fw-bold mb-0" id="cardTotalAcessos">--</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card text-white bg-danger shadow-sm h-100">
+                    <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                        <h6 class="card-title text-uppercase fw-bold">Infrações</h6>
+                        <h2 class="card-text fw-bold mb-0" id="cardTotalInfracoes">--</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card text-dark bg-warning shadow-sm h-100">
+                    <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+                        <h6 class="card-title text-uppercase fw-bold">EPI Mais Esquecido</h6>
+                        <h3 class="card-text fw-bold mb-0" id="cardEpi">--</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card text-white bg-secondary shadow-sm h-100">
+                    <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+                        <h6 class="card-title text-uppercase fw-bold">Setor Crítico</h6>
+                        <h3 class="card-text fw-bold mb-0" id="cardSetor">--</h3>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="container mt-5">
+            <h2 class="text-secondary mb-4">Infrações Detectadas em Tempo Real</h2>
+
+            <div class="table-responsive bg-white shadow-sm rounded">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID do Log</th>
+                            <th>Câmera / Setor (ID)</th>
+                            <th>Status</th>
+                            <th>EPIs Esquecidos</th>
+                            <th>Data e Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaLogs">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">Carregando infrações...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+<script>
+    const token = localStorage.getItem('meuToken')
+
+    if (!token) {
+        alert('Acesso negado. Por favor faça login.')
+        window.location.href = '/'
+    }
+
+    const btnSair = document.getElementById('btnSair')
+
+    btnSair.addEventListener('click', () => {
+        localStorage.removeItem('meuToken')
+        window.location.href = '/'
+    })
+
+    async function carregarInfracoes() {
+        try {
+            const resposta = await fetch('/api/relatorios/infracoes', {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+
+            if (!resposta.ok) {
+                throw new Error('Não foi possível busacar os dados.')
+            }
+
+            const infracoes = await resposta.json()
+
+            const corpoTabela = document.getElementById('tabelaLogs')
+            corpoTabela.innerHTML = ''
+
+            if (infracoes.length === 0) {
+                corpoTabela.innerHTML =
+                    `<tr><td colspan="5" class="text-center py-4 text-success fw-bold">Nenhuma infração detectada! Todos protegidos.</td></tr>`
+                return
+            }
+            infracoes.forEach(log => {
+                let listaEpis = log.itens_esquecidos;
+                if (typeof listaEpis === 'string') {
+                    listaEpis = JSON.parse(listaEpis);
+                }
+
+                const episFormatados = Array.isArray(listaEpis) ? listaEpis.join(', ') : 'Nenhum';
+
+                const linha = `
+                            <tr>
+                                <td>#${log.id_log}</td>
+                                <td><span class="badge bg-secondary">Câmera ${log.id_setor}</span></td>
+                                <td><span class="badge bg-danger">${log.status_acesso}</span></td>
+                                <td class="text-danger fw-bold">${episFormatados}</td>
+                                <td>${new Date(log.data_hora).toLocaleString('pt-BR')}</td>
+                            </tr>
+                        `;
+                corpoTabela.innerHTML += linha;
+            });
+        } catch (erro) {
+            console.error(erro);
+            document.getElementById('tabelaLogs').innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Erro ao carregar dados do servidor.</td></tr>`
+
+        }
+    }
+
+    async function carregarCards() {
+        try {
+            const configFetch = {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token}` }
+            }
+
+            const resGeral = await fetch('/api/relatorios/geral', configFetch)
+            const logsGerais = await resGeral.json()
+            document.getElementById('cardTotalAcessos').innerText = logsGerais.length
+
+            const resInfracoes = await fetch('/api/relatorios/infracoes', configFetch)
+            const infracoes = await resInfracoes.json()
+            document.getElementById('cardTotalInfracoes').innerText = infracoes.length
+
+            const resEpis = await fetch('/api/relatorios/ranking-epis', configFetch)
+            const rankingEpi = await resEpis.json()
+            document.getElementById('cardEpi').innerText = rankingEpi.length > 0 ? rankingEpi[0].epi : 'Nenhum'
+
+            const resSetores = await fetch('/api/relatorios/ranking-setores', configFetch)
+            const rankingSetores = await resSetores.json()
+            document.getElementById('cardSetor').innerText = rankingSetores.length > 0 && rankingSetores[0].quantidade > 2 ? rankingSetores[0].setor : 'Nenhum'
+        } catch (erro) {
+            console.error("Erro ao carregar os cards de resumo:", erro);
+
+
+        }
+
+    }
+    setInterval(() => {
+        carregarInfracoes()
+        carregarCards()
+    }, 3000)
+</script>
+
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Setores - Gestão de EPIs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</head>
+
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/dashboard">Gestão de EPIs</a>
+            <div class="navbar-nav me-auto">
+                <a class="nav-link text-white" href="/dashboard">Painel de Infrações</a>
+                <a class="nav-link text-white fw-bold active" href="/setores">Gerenciar Setores</a>
+            </div>
+            <button class="btn btn-danger btn-sm" id="btnSair">Sair</button>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="text-secondary">Setorização</h2>
+            <button class="btn btn-success fw-bold" onclick="abrirModalCadastro()">+ Novo Setor</button>
+        </div>
+        <hr>
+
+        <div class="table-responsive bg-white shadow-sm rounded mt-4">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome do Setor</th>
+                        <th>Capacete</th>
+                        <th>Luvas</th>
+                        <th>Colete</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaSetores">
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Carregando setores...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalSetor" tabindex="-1" aria-hidden="true">
+        <div class="modal-content modal-dialog">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="modalTitulo">Cadastrar Novo Setor</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <form id="formSetor">
+                <div class="modal-body">
+                    <input type="hidden" id="idSetorEditar">
+
+                    <div class="mb-3">
+                        <label for="nomeSetor" class="form-label fw-bold">Nome do Setor</label>
+                        <input type="text" class="form-control" id="nomeSetor" required
+                            placeholder="Ex: Linha de Montagem A">
+                    </div>
+
+                    <h6 class="fw-bold mt-4 mb-3 text-secondary">EPIs Obrigatórios no Setor:</h6>
+
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="chkCapacete">
+                        <label class="form-check-input-label" for="chkCapacete">Uso de Capacete</label>
+                    </div>
+
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="chkLuvas">
+                        <label class="form-check-input-label" for="chkLuvas">Uso de Luvas de Proteção</label>
+                    </div>
+
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="chkColete">
+                        <label class="form-check-input-label" for="chkColete">Uso de Colete Refletivo</label>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+
+
+        const token = localStorage.getItem('meuToken')
+
+        const bootstrapModal = new bootstrap.Modal(document.getElementById('modalSetor'))
+
+        if (!token) {
+            alert('Acesso negado. Faça login.')
+            window.location.href = '/'
+        }
+
+        document.getElementById('btnSair').addEventListener('click', () => {
+            localStorage.removeItem('meuToken')
+            window.location.href = '/'
+        })
+
+        async function carregarSetores() {
+            try {
+                const resposta = await fetch('/api', {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+
+                if (!resposta.ok) {
+                    throw new Error('Erro ao buscar setores.')
+                }
+
+                const dados = await resposta.json()
+                const setores = dados.setor
+
+                const corpoTabela = document.getElementById('tabelaSetores')
+                corpoTabela.innerHTML = ''
+
+                if (setores.length === 0) {
+                    corpoTabela.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Nenhum setor cadastrado.</td></tr>`
+                    return
+                }
+
+                setores.forEach(s => {
+
+                    const badge = (obrigatorio) => obrigatorio
+                        ? '<span class="badge bg-danger">Obrigatório</span>'
+                        : '<span class="badge bg-success">Liberado</span>'
+
+                    const linha = `
+                <tr>
+                    <td><strong>#${s.id_setor}</strong></td>
+                    <td>${s.nome_setor}</td>
+                    <td>${badge(s.capacete_obrigatorio)}</td>
+                    <td>${badge(s.luvas_obrigatorio)}</td>
+                    <td>${badge(s.colete_obrigatorio)}</td>
+                    <td class="text-center">
+                        <button class="btn btn-warning btn-sm me-1 fw-bold" onclick="prepararEdicao(${s.id_setor})">Editar</button>
+                        <button class="btn btn-danger btn-sm fw-bold" onclick="deletarSetor(${s.id_setor})">Excluir</button>
+                    </td>
+                </tr>
+            `
+                    corpoTabela.innerHTML += linha
+                })
+            } catch (erro) {
+                console.error(erro);
+                document.getElementById('tabelaSetores').innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Erro ao carregar dados.</td></tr>`
+            }
+
+        } carregarSetores()
+
+        function abrirModalCadastro() {
+            document.getElementById('formSetor').reset()
+            document.getElementById('modalTitulo').innerText = 'Cadastrar Novo Setor'
+            document.getElementById('idSetorEditar').value = ''
+
+            bootstrapModal.show()
+        }
+
+        document.getElementById('formSetor').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const idSetor = document.getElementById('idSetorEditar').value;
+
+            const nome_setor = document.getElementById('nomeSetor').value;
+            const capacete_obrigatorio = document.getElementById('chkCapacete').checked;
+            const luvas_obrigatorio = document.getElementById('chkLuvas').checked;
+            const colete_obrigatorio = document.getElementById('chkColete').checked;
+
+            const payload = {
+                nome_setor,
+                capacete_obrigatorio,
+                luvas_obrigatorio,
+                colete_obrigatorio
+            };
+
+            let url = '/api/setores';
+            let metodo = 'POST';
+
+            if (idSetor) {
+                url = `/api/atualizarSetor/${idSetor}`;
+                metodo = 'PUT';
+            }
+
+            try {
+                const resposta = await fetch(url, {
+                    method: metodo,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const resultado = await resposta.json();
+
+                if (!resposta.ok) {
+                    throw new Error(resultado.erro || 'Erro ao salvar o setor.');
+                }
+
+                bootstrapModal.hide();
+                carregarSetores();
+
+            } catch (erro) {
+                alert(erro.message);
+                console.error("Erro no formulário:", erro);
+            }
+        });
+
+        async function prepararEdicao(id_setor) {
+            try {
+                const resposta = await fetch(`/api/buscarSetor/${id_setor}`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+
+                if (!resposta.ok) {
+                    throw new Error('Erro ao buscar os dados deste setor')
+                }
+
+                const dados = await resposta.json()
+                const setor = dados
+
+                document.getElementById('idSetorEditar').value = id_setor
+
+                document.getElementById('nomeSetor').value = setor.nome_setor
+                document.getElementById('chkCapacete').checked = setor.capacete_obrigatorio
+                document.getElementById('chkLuvas').checked = setor.luvas_obrigatorio
+                document.getElementById('chkColete').checked = setor.colete_obrigatorio
+
+                document.getElementById('modalTitulo').innerText = `Editar Setor #${setor.id_setor}`
+
+                bootstrapModal.show()
+
+            } catch (erro) {
+                alert(erro.message)
+                console.error("Erro ao preparar edição:", erro)
+            }
+        }
+
+        async function deletarSetor(id_setor) {
+            
+            const confirmar = confirm(`Tem certeza que deseja excluir o setor #${id_setor}?`);
+            if (!confirmar) return;
+
+            try {
+                const resposta = await fetch(`/api/deletarSetor/${id_setor}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const resultado = await resposta.json();
+
+                if (!resposta.ok) {
+                    throw new Error(resultado.erro || 'Erro ao excluir o setor.');
+                }
+
+                alert('Setor removido com sucesso!');
+                carregarSetores();
+
+            } catch (erro) {
+                alert(erro.message);
+                console.error("Erro ao deletar setor:", erro);
+            }
+        }
+
+    </script>
+</body>
+
+</html>

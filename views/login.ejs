@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-Br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>>Login - Gestão de EPIs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="card shadow p-4" style="width: 100%; max-width: 400px;">
+            <h3 class="text-center mb-4 text-primary">Controle de EPIs</h3>
+
+            <form id="formLogin">
+                <div class="mb-3">
+                    <label for="login" class="form-label">Usuário</label>
+                    <input type="text" id="login" class="form-control" placeholder="Digite seu usuário" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="senha" class="form-label">Senha</label>
+                    <input type="password" id="senha" class="form-control" placeholder="Digite sua senha" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Entrar</button>
+            </form>
+
+            <div id="mensagemErro" class="alert alert-danger mt-3 d-none text-center" role="alert"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('formLogin');
+        const caixaErro = document.getElementById('mensagemErro');
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const loginDigitado = document.getElementById('login').value;
+            const senhaDigitada = document.getElementById('senha').value;
+
+            try {
+                const resposta = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ login: loginDigitado, senha: senhaDigitada })
+                });
+
+                const dados = await resposta.json();
+
+                if (resposta.ok) {
+                    localStorage.setItem('meuToken', dados.token);
+
+                    caixaErro.classList.remove('d-none', 'alert-danger');
+                    caixaErro.classList.add('alert-success');
+                    caixaErro.textContent = 'Login aprovado!';
+                    window.location.href = '/dashboard';
+                } else {
+                    caixaErro.textContent = dados.erro || 'Login ou senha incorretos';
+                    caixaErro.classList.remove('d-none');
+                }
+            } catch (error) {
+                caixaErro.textContent = 'Erro ao conectar com o servidor.';
+                caixaErro.classList.remove('d-none');
+            }
+        });
+    </script>
+</body>
+
+</html>
