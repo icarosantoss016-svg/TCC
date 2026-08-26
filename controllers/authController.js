@@ -19,7 +19,7 @@ exports.login = async (req, res) => {
         const usuario = await Usuario.findOne({ where: { login } })
 
         if (!usuario) {
-            return res.status(401).json({ erro: 'Login ou senha inválidos' })
+            return res.status(401).json({ error: 'Login ou senha inválidos' })
         }
 
         const senhaCorreta = await bcrypt.compare(senha, usuario.senha)
@@ -32,9 +32,9 @@ exports.login = async (req, res) => {
 
         res.json({ token })
 
-    } catch (erro) {
+    } catch (error) {
         console.error(error);
-        res.status(500).json({ erro: ' Erro ao autenticar usuário' })
+        res.status(500).json({ error: ' Erro ao autenticar usuário' })
 
     }
 }
