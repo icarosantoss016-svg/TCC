@@ -19,6 +19,10 @@ const Usuario = sequelize.define('Usuario', {
     perfil:{
         type:DataTypes.ENUM('ADMIN','ADM_EMPRESA','USUARIO'),
         allowNull:false
+    },
+    id_empresa:{
+        type:DataTypes.INTEGER,
+        allowNull:false
     }
 })
 
