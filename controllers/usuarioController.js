@@ -18,7 +18,7 @@ exports.criarUsuario = async (req, res) => {
     }
 
     if(!id_empresa||isNaN(id_empresa)){
-      return res.status(400).json({error:'Id da empresa é obrigatório.'})
+      return res.status(400).json({error:'Id da empresa é obrigatório, e deve ser um número.'})
     }
 
 
@@ -32,7 +32,7 @@ exports.criarUsuario = async (req, res) => {
     const empresa = await findOne({where:{id_empresa:id_empresa}})
 
     if(!empresa||empresa===null|| empresa===undefined){
-      return res.status(404).json({error:'Empresa não localizada pelo Id.'})
+      return res.status(404).json({error:'Empresa não localizada pelo Id, usuario não cadastrado.'})
     }
     
     
@@ -43,7 +43,7 @@ exports.criarUsuario = async (req, res) => {
       login:login.trim(),
       senha:senhaCriptografada,
       perfil:perfilFormatado,
-      id_empresa:empresa
+      id_empresa:empresa.id_empresa
     })
 
     return res.status(201).json({
