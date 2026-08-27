@@ -12,20 +12,9 @@ const Setor = sequelize.define('Setor', {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    capacete_obrigatorio: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
-    },
-    luvas_obrigatorio: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
-    },
-    colete_obrigatorio: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: false
+    id_empresa:{
+        type:DataTypes.INTEGER,
+        allowNull:false
     }
 })
 

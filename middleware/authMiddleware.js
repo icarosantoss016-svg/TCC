@@ -1,19 +1,35 @@
 const jwt = require('jsonwebtoken')
-const SECRET = "Senha"
+require ('dotenv').config()
+const SECRET = process.env.SECRET
 
 module.exports = (req, res, next) => {
     const authHeader = req.headers.authorization
 
     if (!authHeader) {
-        return res.status(401).json({ erro: 'Token não fornecido.' })
+        return res.status(401).json({ error: 'Token não fornecido.' })
     }
 
-    const token = authHeader.split(' ')[1]
+    const partes = authHeader.split(' ')
+
+    if(partes.length!==2){
+        return res.status(401).json({error:'Erro de formatação do token.'})
+    }
+
+    const [tipo,token] = partes
+
+    if(!/^Bearer$/i.test(tipo)){
+        return res.status(401).json({error:'Token mal formatado'})
+    }
+
     try {
         const decoded = jwt.verify(token, SECRET)
         req.usuario = decoded
         next()
-    } catch (erro) {
-        return res.status(403).json({ erro: 'Token inválido ou expirado' })
+    } catch (error) {
+
+        if(error.name === 'TokenExpiredError'){
+            return res.status(401).json({error:'Token expirado. Faça login Novamente.'})
+        }
+        return res.status(403).json({ error: 'Token inválido ou expirado' })
     }
 }
