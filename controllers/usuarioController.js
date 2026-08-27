@@ -35,7 +35,7 @@ exports.criarUsuario = async (req, res) => {
 
     return res.status(201).json({
       mensagem:'Usuário criado com sucesso.',
-      id:novoUsuario.id
+      id:novousuario.id_usuario
     })
 
   } catch (error) {
