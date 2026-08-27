@@ -1,24 +1,27 @@
 const Setor = require('../models/setor')
+const Empresa = require ('../models/empresa')
+
 
 exports.criarSetor = async (req, res) => {
     try {
-        const { nome_setor, capacete_obrigatorio, luvas_obrigatorio, colete_obrigatorio } = req.body
+        const { nome_setor, id_empresa } = req.body
 
         if (!nome_setor || nome_setor.trim() === "") {
             return res.status(400).json({ erro: 'Nome do setor é obriatório' })
         }
-        if (typeof capacete_obrigatorio !== 'boolean') {
-            return res.status(400).json({ erro: 'O campo capacete_obrigatorio deve ser verdadeiro (true) ou falso (false).' })
+
+        if(!id_empresa|| isNaN(id_empresa)){
+            return res.status(400).json({error:'Id da empresa é obrigatório e deve ser um número.'})
         }
 
-        if (typeof luvas_obrigatorio !== 'boolean') {
-            return res.status(400).json({ erro: 'O campo luvas_obrigatorio deve ser verdadeiro (true) ou falso (false).' })
+        const empresa = await Empresa.findOne({
+            where:{id_empresa:id_empresa}
+        })
+        if(!empresa|| empresa===null|| empresa===undefined){
+            return res.status(404).json({error:'Empresa não localizada através do ID, nenhum setor foi cadastrado.'})
         }
 
-        if (typeof colete_obrigatorio !== 'boolean') {
-            return res.status(400).json({ erro: 'O campo colete_obrigatorio deve ser verdadeiro (true) ou falso (false).' })
-        }
-        const novoSetor = await Setor.create({ nome_setor, capacete_obrigatorio, luvas_obrigatorio, colete_obrigatorio })
+        const novoSetor = await Setor.create({ nome_setor, id_empresa:empresa.id_empresa})
 
         return res.status(201).json({ menssagem: 'Setor criado com sucesso.', setor: novoSetor })
     } catch (erro) {
@@ -55,7 +58,7 @@ exports.buscarSetor = async (req, res) => {
 exports.atualizarSetor = async (req, res) => {
     try {
         const { id_setor } = req.params
-        const { nome_setor, capacete_obrigatorio, luvas_obrigatorio, colete_obrigatorio } = req.body
+        const { nome_setor} = req.body
 
         const setor = await Setor.findByPk(id_setor)
 
@@ -63,21 +66,9 @@ exports.atualizarSetor = async (req, res) => {
             return res.status(400).json({ erro: 'Nome do setor é obriatório' })
         }
 
-        if (typeof capacete_obrigatorio !== 'boolean') {
-            return res.status(400).json({ erro: 'O campo capacete_obrigatorio deve ser verdadeiro (true) ou falso (false).' })
-        }
+        await setor.update({ nome_setor:nome_setor })
 
-        if (typeof luvas_obrigatorio !== 'boolean') {
-            return res.status(400).json({ erro: 'O campo luvas_obrigatorio deve ser verdadeiro (true) ou falso (false).' })
-        }
-
-        if (typeof colete_obrigatorio !== 'boolean') {
-            return res.status(400).json({ erro: 'O campo colete_obrigatorio deve ser verdadeiro (true) ou falso (false).' })
-        }
-
-        await setor.update({ nome_setor, capacete_obrigatorio, luvas_obrigatorio, colete_obrigatorio })
-
-        res.status(200).json(setor)
+        res.status(200).json({mensagem:'Setor atualizado com sucesso.'},setor)
 
     } catch (erro) {
         console.error("Erro ao editar setor:", erro);
