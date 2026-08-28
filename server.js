@@ -9,7 +9,7 @@ const authRoutes = require('./routers/authRoutes')
 const relatoriosRoutes = require('./routers/relatorioRoutes')
 const viewsRoutes = require('./routers/viewsRoutes')
 const empresaRoutes = require('./routers/empresaRoutes')
-
+const regraEpiRoutes = require('./routers/regraEpiRoutes')
 const { criarEmpresaAdmin } = require('./controllers/empresaContoller')
 const { criarAdminPadrao} = require('./controllers/usuarioController')
 
@@ -25,6 +25,7 @@ app.use(usuarioRoutes)
 app.use(authRoutes)
 app.use(relatoriosRoutes)
 app.use(empresaRoutes)
+app.use(regraEpiRoutes)
 app.use('/', viewsRoutes);
 
 
