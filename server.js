@@ -1,6 +1,14 @@
 const express = require('express');
 const sequelize = require('./config/database');
 require('./models')
+
+const acessoRoutes = require('./routers/acessoRoutes')
+const setorRoutes = require('./routers/setorRoutes')
+const usuarioRoutes = require('./routers/usuarioRoutes')
+const authRoutes = require('./routers/authRoutes')
+const relatoriosRoutes = require('./routers/relatorioRoutes')
+const viewsRoutes = require('./routers/viewsRoutes')
+
 const app = express();
 const PORT = 3000;
 
