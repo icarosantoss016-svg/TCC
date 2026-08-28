@@ -74,20 +74,28 @@ exports.deletarRegraEpi = async (req, res) =>{
 }
 
 exports.atualizarRegraEpi = async (req, res)=>{
-    const regra = await RegraEpi.findByPk(req.params.id)
-    const {nome_Epi} = req.body
-
-    if(!regra){
-        return res.status(404).json({error:'Regra de EPI não localizada.'})
+    
+    try {
+        const regra = await RegraEpi.findByPk(req.params.id)
+        const {nome_Epi} = req.body
+    
+        if(!regra){
+            return res.status(404).json({error:'Regra de EPI não localizada.'})
+        }
+    
+        if(!nome_Epi||typeof nome_Epi!=='string'||!nome_Epi.trim()){
+            return res.status(400).json({error:'Nome do Epi é obrigatório.'})
+        }
+    
+        await regra.update({
+            nome_Epi:nome_Epi
+        })
+    
+        return res.status(201).json({mensagem:'Regra de EPI ataulizada com sucesso.',regra})
+        
+    } catch (error) {
+        console.error('Erro ao atualizar regra de EPI:', error)
+        return res.status(500).json({ error: 'Erro interno ao atualizar regra de EPI.' })
     }
-
-    if(!nome_Epi||typeof nome_Epi!=='string'||!nome_Epi.trim()){
-        return res.status(400).json({error:'Nome do Epi é obrigatório.'})
-    }
-
-    await regra.update({
-        nome_Epi:nome_Epi
-    })
-
-    return res.status(201).json({mensagem:'Regra de EPI ataulizada com sucesso.',regra})
+    
 }
