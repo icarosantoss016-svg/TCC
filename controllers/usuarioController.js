@@ -1,4 +1,5 @@
 const Usuario = require('../models/usuario')
+const Empresa =require('../models/empresa')
 const bcrypt = require("bcrypt")
 
 exports.criarUsuario = async (req, res) => {
@@ -29,7 +30,7 @@ exports.criarUsuario = async (req, res) => {
       return res.status(400).json({error: `Perfil inválido. Use: ${perfisPermitidos.join(', ')}`})
     }
    
-    const empresa = await findOne({where:{id_empresa:id_empresa}})
+    const empresa = await Empresa.findOne({where:{id_empresa:id_empresa}})
 
     if(!empresa||empresa===null|| empresa===undefined){
       return res.status(404).json({error:'Empresa não localizada pelo Id, usuario não cadastrado.'})
@@ -48,7 +49,7 @@ exports.criarUsuario = async (req, res) => {
 
     return res.status(201).json({
       mensagem:'Usuário criado com sucesso.',
-      id:novousuario.id_usuario
+      id:novoUsuario.id_usuario
     })
 
   } catch (error) {
