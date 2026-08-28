@@ -5,5 +5,6 @@ const authMiddleware = require('../middleware/authMiddleware')
 
 router.post('/api/criarRegra',authMiddleware,regraEpiController.criarRegraEpi)
 router.get('/api/listarRegra',authMiddleware,regraEpiController.listarRegrasEpi)
-router.get('/api/buscarRegra/id_regra', authMiddleware, regraEpiController.buscarRegraEpiId)
-router.put('/api/atulaizarRegra',authMiddleware, regraEpiController.atualizarRegraEpi)
+router.get('/api/buscarRegra/:id', authMiddleware, regraEpiController.buscarRegraEpiId)
+router.put('/api/atulaizarRegra/:id',authMiddleware, regraEpiController.atualizarRegraEpi)
+router.delete('/api/deletarRegra/:id',authMiddleware,regraEpiController.deletarRegraEpi)
