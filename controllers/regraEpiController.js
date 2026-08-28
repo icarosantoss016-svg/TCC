@@ -27,7 +27,7 @@ exports.criarRegraEpi = async (req,res)=>{
         return res.status(201).json({mensagem:'Regra de EPI criada:', novaRegra})
     } catch (error) {
         console.error('Erro ao criar regra de Epi:', error)
-        return status(500).json({error:'Erro interno ao criar regra de EPI'})
+        return res.status(500).json({error:'Erro interno ao criar regra de EPI'})
     }
 }
 
@@ -59,7 +59,7 @@ exports.buscarRegraEpiId= async (req,res) =>{
 exports.deletarRegraEpi = async (req, res) =>{
     try {
         const linhasDeletadas = await RegraEpi.destroy({
-            where:{id:req.params.id}
+            where:{id_regra:req.params.id}
         })
     
         if (linhasDeletadas === 0){
