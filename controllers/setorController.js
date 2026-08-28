@@ -71,7 +71,7 @@ exports.atualizarSetor = async (req, res) => {
 
         await setor.update({ nome_setor:nome_setor })
 
-        res.status(200).json({mensagem:'Setor atualizado com sucesso.'},setor)
+        res.status(200).json({mensagem:'Setor atualizado com sucesso.',setor})
 
     } catch (erro) {
         console.error("Erro ao editar setor:", erro);
