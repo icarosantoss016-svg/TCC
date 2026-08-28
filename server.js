@@ -9,6 +9,9 @@ const authRoutes = require('./routers/authRoutes')
 const relatoriosRoutes = require('./routers/relatorioRoutes')
 const viewsRoutes = require('./routers/viewsRoutes')
 
+const { criarEmpresaAdmin } = require('./controllers/empresaContoller')
+const { criarAdminPadrao} = require('./controllers/usuarioController')
+
 const app = express();
 const PORT = 3000;
 
@@ -25,9 +28,10 @@ app.use('/', viewsRoutes);
 
 
 sequelize.sync({ force: false })
-    .then(() => {
+    .then(async() => {
         console.log('Banco de dados conectado e tabelas sincronizadas com sucesso.');
-
+        await criarEmpresaAdmin()   
+        await criarAdminPadrao()
         app.listen(PORT, () => {
             console.log(`Servidor rodando em http://localhost:${PORT}`);
         });
