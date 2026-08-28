@@ -63,6 +63,8 @@ exports.deletarEmpresa = async (req,res)=>{
         if(linhasDeletadas===0){
             return res.status(404).json({error:'Empresa não encotrada.'})
         }
+
+        return res.status(200).json({mensagem:'Empresa deletada com sucesso.'})
     } catch (error) {
         console.error("Erro ao deletar a empresa:", error);
         return res.status(500).json({ error: "Erro interno ao deletar empresa." })
