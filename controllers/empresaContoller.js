@@ -83,7 +83,9 @@ exports.atualizarEmpresa = async (req, res) => {
             return res.status(400).json({error:'CNPJ é obrigatorio.'})
 
         }
-
+        if (!empresa) {
+          return res.status(404).json({ error: 'Empresa não encontrada.' })
+        }
         await empresa.update({
             nome:nome,
             cnpj:cnpj

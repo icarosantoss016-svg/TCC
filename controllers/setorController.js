@@ -57,13 +57,16 @@ exports.buscarSetor = async (req, res) => {
 
 exports.atualizarSetor = async (req, res) => {
     try {
-        const { id_setor } = req.params
+        
+        const setor = await Setor.findByPk(req.params.id)
         const { nome_setor} = req.body
-
-        const setor = await Setor.findByPk(id_setor)
 
         if (!nome_setor || nome_setor.trim() === "") {
             return res.status(400).json({ erro: 'Nome do setor é obriatório' })
+        }
+
+        if(!setor){
+            return res.status(404).json({error:'Setor não localizado.'})
         }
 
         await setor.update({ nome_setor:nome_setor })
