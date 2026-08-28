@@ -42,7 +42,7 @@ exports.listarSetor = async (req, res) => {
 
 exports.buscarSetor = async (req, res) => {
     try {
-        const { id_setor } = req.params
+        const { id } = req.params
         const setor = await Setor.findByPk(id)
 
         if (!setor) {
@@ -82,7 +82,7 @@ exports.atualizarSetor = async (req, res) => {
 
 exports.deletarSetor = async (req,res) =>{
     try {
-        const { id_setor } = req.params
+        const { id} = req.params
         const setor = await Setor.findByPk(id)
 
         if(!setor){

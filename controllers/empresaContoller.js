@@ -120,3 +120,21 @@ exports.criarEmpresaAdmin = async()=>{
 
     }
 }
+
+exports.buscarEmpresasPorCNPJ = async function (req,res) {
+    try {
+        const {cnpj} = req.params
+        const empresa = await Empresa.findOne({
+            where:{cnpj}
+        })
+
+        if(!empresa){
+            return res.status(404).json({error:'Nenhuma empresa encontrada com esse CNPJ.'})
+        }
+
+        return res.status(200).json(empresa)
+    } catch (error) {
+        console.error('Erro ao buscar empresa por CNPJ:', error)
+        return res.status(500).json({ error: 'Erro interno ao buscar empresa.' })
+    }
+}
