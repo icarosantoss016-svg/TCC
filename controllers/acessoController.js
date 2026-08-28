@@ -35,7 +35,7 @@ exports.verificarAcesso = async (req, res) => {
             const epiExigido=regra.nome_Epi.toLowerCase()
             
             if(!itens_detectados.includes(epiExigido)){
-                esquecidos.push(epiExigido)
+                esquecidos.push(regra.nome_exibicao)
             }
         }
         const status = esquecidos.length === 0 ? 'PERMITIDO' : 'NEGADO'

@@ -14,6 +14,10 @@ const RegraEpi =sequelize.define('RegraEpi',{
     nome_Epi:{
         type:DataTypes.STRING,
         allowNull:false
+    },
+    nome_exibicao:{
+        type:DataTypes.STRING,
+        allowNull:false
     }
 })
 

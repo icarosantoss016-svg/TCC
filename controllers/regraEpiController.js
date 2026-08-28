@@ -4,10 +4,14 @@ const Setor = require ('../models/setor')
 
 exports.criarRegraEpi = async (req,res)=>{
     try {
-        const {id_setor, nome_Epi} = req.body
+        const {id_setor, nome_Epi, nome_exibicao} = req.body
 
         if(!nome_Epi||typeof nome_Epi!== 'string'|| !nome_Epi.trim()){
             return res.status(400).json({error:'Nome do Epi é obrigatório.'})
+        }
+
+        if(!nome_exibicao||typeof nome_exibicao!=='string'|| !nome_exibicao.trim()){
+            return res.status(400).json({error:'Nome de exibição é obrigatório.'})
         }
 
         if (!id_setor||isNaN(id_setor)){
@@ -21,7 +25,8 @@ exports.criarRegraEpi = async (req,res)=>{
 
         const novaRegra = await RegraEpi.create({
             id_setor:setor.id_setor,
-            nome_Epi:nome_Epi
+            nome_Epi:nome_Epi,
+            nome_exibicao:nome_exibicao
         })
 
         return res.status(201).json({mensagem:'Regra de EPI criada:', novaRegra})
@@ -77,7 +82,7 @@ exports.atualizarRegraEpi = async (req, res)=>{
     
     try {
         const regra = await RegraEpi.findByPk(req.params.id)
-        const {nome_Epi} = req.body
+        const {nome_Epi, nome_exibicao} = req.body
     
         if(!regra){
             return res.status(404).json({error:'Regra de EPI não localizada.'})
@@ -86,9 +91,14 @@ exports.atualizarRegraEpi = async (req, res)=>{
         if(!nome_Epi||typeof nome_Epi!=='string'||!nome_Epi.trim()){
             return res.status(400).json({error:'Nome do Epi é obrigatório.'})
         }
+
+        if(!nome_exibicao||typeof nome_exibicao!=='string'|| !nome_exibicao.trim()){
+            return res.status(400).json({error:'Nome de exibição é obrigatório.'})
+        }
     
         await regra.update({
-            nome_Epi:nome_Epi
+            nome_Epi:nome_Epi,
+            nome_exibicao:nome_exibicao
         })
     
         return res.status(201).json({mensagem:'Regra de EPI ataulizada com sucesso.',regra})

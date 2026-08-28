@@ -25,7 +25,7 @@ cnpj = input("CNPJ da empresa cliente: ").strip()
 
 resposta_empresa = requests.get(f'{URL_BASE}/api/empresa/cnpj/{cnpj}', headers=headers)
 
-if resposta_empresa!=200:
+if resposta_empresa.status_code !=200:
     print("Empresa não encontrada com esse CNPJ. Cadastre a empresa antes de continuar.")
     exit()
 
