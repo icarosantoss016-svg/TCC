@@ -2,7 +2,7 @@ const Empresa = require ('../models/empresa')
 
 exports.criarEmpresa= async(req,res)=>{
     try {
-        const {nome,cnpj} = req.body
+        const {nome,cnpj,ramo} = req.body
 
         if(!nome|| typeof nome!=='string'|| !nome.trim()){
             return res.status(400).json({error:'Nome é obrigatorio.'})
@@ -12,6 +12,10 @@ exports.criarEmpresa= async(req,res)=>{
 
         }
 
+        if(!ramo|| typeof ramo !=='string'|| !ramo.trim()){
+            return res.status(400).json({error: 'Ramo é obrigatório.'})
+        }
+
         const novaEmpresa = await Empresa.create({
             nome,
             cnpj
@@ -19,7 +23,8 @@ exports.criarEmpresa= async(req,res)=>{
 
         return res.status(201).json({
             mensage:'Empresa criada com sucesso',
-            Empresa: novaEmpresa
+            Empresa: novaEmpresa,
+            ramo:ramo
         })
     } catch (error) {
         console.error('Erro ao criar empresa:', error)
@@ -74,7 +79,7 @@ exports.deletarEmpresa = async (req,res)=>{
 exports.atualizarEmpresa = async (req, res) => {
       try {
         const empresa = await Empresa.findByPk(req.params.id)
-        const {nome,cnpj} = req.body
+        const {nome,cnpj,ramo} = req.body
 
         if(!nome|| typeof nome!=='string'|| !nome.trim()){
             return res.status(400).json({error:'Nome é obrigatorio.'})
@@ -88,7 +93,8 @@ exports.atualizarEmpresa = async (req, res) => {
         }
         await empresa.update({
             nome:nome,
-            cnpj:cnpj
+            cnpj:cnpj,
+            ramo:ramo
         })
 
         return res.status(201).json({
@@ -110,7 +116,8 @@ exports.criarEmpresaAdmin = async()=>{
         if(!empresaAdminExiste){
             await Empresa.create({
                 nome:'SafeZone',
-                cnpj:'00000000000000'
+                cnpj:'00000000000000',
+                ramo:'Segurança'
             })
         }
 
