@@ -95,7 +95,7 @@ exports.buscarUsuarioId = async (req, res) => {
 exports.deletarUsuario = async (req, res) => {
   try {
     const linhasDeletadas = await Usuario.destroy({
-      where: { id: req.params.id }
+      where: { id_usuario: req.params.id }
     });
 
     if (linhasDeletadas === 0) {

@@ -57,7 +57,7 @@ exports.buscarEmpresasId = async (req,res) =>{
 exports.deletarEmpresa = async (req,res)=>{
     try {
         const linhasDeletadas = await Empresa.destroy({
-            where:{id:req.params.id}
+            where:{id_empresa:req.params.id}
         })
 
         if(linhasDeletadas===0){
