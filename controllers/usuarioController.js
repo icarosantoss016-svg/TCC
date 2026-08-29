@@ -1,9 +1,10 @@
 const Usuario = require('../models/usuario')
+const Empresa =require('../models/empresa')
 const bcrypt = require("bcrypt")
 
 exports.criarUsuario = async (req, res) => {
   try {
-    const {login, senha, perfil} = req.body
+    const {login, senha, perfil, id_empresa} = req.body
 
     if(!login|| typeof login!=='string'||!login.trim()){
       return res.status(400).json({error:'Login é obrigatório.'})
@@ -17,25 +18,38 @@ exports.criarUsuario = async (req, res) => {
       return res.status(400).json({error:'Perfil é obrigatória.'})
     }
 
+    if(!id_empresa||isNaN(id_empresa)){
+      return res.status(400).json({error:'Id da empresa é obrigatório, e deve ser um número.'})
+    }
+
+
     const perfilFormatado = perfil.trim().toUpperCase()
 
     const perfisPermitidos = ['ADMIN','ADM_EMPRESA','USUARIO']
     if(!perfisPermitidos.includes(perfilFormatado)){
       return res.status(400).json({error: `Perfil inválido. Use: ${perfisPermitidos.join(', ')}`})
     }
+   
+    const empresa = await Empresa.findOne({where:{id_empresa:id_empresa}})
 
+    if(!empresa||empresa===null|| empresa===undefined){
+      return res.status(404).json({error:'Empresa não localizada pelo Id, usuario não cadastrado.'})
+    }
+    
+    
     const salt = await bcrypt.genSalt(10)
     const senhaCriptografada = await bcrypt.hash(senha, salt)
 
     const novoUsuario = await Usuario.create({
       login:login.trim(),
       senha:senhaCriptografada,
-      perfil:perfilFormatado
+      perfil:perfilFormatado,
+      id_empresa:empresa.id_empresa
     })
 
     return res.status(201).json({
       mensagem:'Usuário criado com sucesso.',
-      id:novoUsuario.id
+      id:novoUsuario.id_usuario
     })
 
   } catch (error) {
@@ -81,7 +95,7 @@ exports.buscarUsuarioId = async (req, res) => {
 exports.deletarUsuario = async (req, res) => {
   try {
     const linhasDeletadas = await Usuario.destroy({
-      where: { id: req.params.id }
+      where: { id_usuario: req.params.id }
     });
 
     if (linhasDeletadas === 0) {
@@ -130,7 +144,8 @@ exports.criarAdminPadrao = async ()=>{
       await Usuario.create({
         login:'admin',
         senha:senhaHash,
-        perfil:'ADMIN'
+        perfil:'ADMIN',
+        id_empresa:1
       })
       console.log('Usuário admin padrão criado(Login:admin / Senha:admin123)')      
     }

@@ -1,57 +1,27 @@
+    const {Op} = require ('sequelize')
     const LogAcesso = require('../models/logAcesso')
     const Setor = require('../models/setor')
 
-    exports.listarTodosOsLogs = async (req, res) => {
+    exports.listarLogsFiltrados = async (req,res)=>{ 
         try {
-            const logs = await LogAcesso.findAll({ order: [['createdAt', 'DESC']] });
-
-            return res.status(200).json(logs);
-
-        } catch (erro) {
-            console.error("Erro ao buscar logs:", erro);
-            return res.status(500).json({ erro: "Erro interno ao gerar relatório geral." });
-        }
-    };
-
-    exports.listarInfracoes = async (req, res) => {
-    try {
-        const infracoes = await LogAcesso.findAll({
-            where: { status_acesso: 'NEGADO' },
-            order: [['createdAt', 'DESC']]
-        });
-
-        const dicionarioTraducoes = {
-            'helmet': 'Capacete',
-            'vest': 'Colete',
-            'gloves': 'Luvas'
-        };
-       
-        const infracoesTraduzidas = infracoes.map(log => {
-      
-            const logPuro = log.toJSON() 
+            const {status} = req.query
+            const filtro = {}
             
-            let esquecidos = logPuro.itens_esquecidos;
+            if (status ==='PERMITDO'||status === 'NEGADO'){
+                filtro.status_acesso=status
+                }
 
-            if (typeof esquecidos === 'string') {
-                try { esquecidos = JSON.parse(esquecidos); } catch (e) { esquecidos = [] }
-            }
+            const logs = await LogAcesso.findAll({
+                where:filtro,
+                order:[['createdAt','DESC']]
+            })
 
-            if (Array.isArray(esquecidos)) {
-                logPuro.itens_esquecidos = esquecidos.map(item => {
-                    const itemFormatado = item.toLowerCase().trim()
-                    return dicionarioTraducoes[itemFormatado] || item
-                });
-            }
-
-            return logPuro
-        });
-        return res.status(200).json(infracoesTraduzidas)
-
-    } catch (erro) {
-        console.error("Erro ao buscar infrações:", erro)
-        return res.status(500).json({ erro: "Erro interno ao gerar relatório de infrações." })
-    }
-};
+            return res.status(200).json(logs)
+        } catch (error) {
+            console.error("Erro ao buscar logs:", error)
+            return res.status(500).json({ error: "Erro interno ao gerar relatório." })
+        }
+    }   
 
     exports.listarEpisMaisEsquecidos = async (req, res) => {
         try {
@@ -59,17 +29,7 @@
                 where: { status_acesso: 'NEGADO' }
             });
 
-            const contagem = {
-                'Capacete': 0,
-                'Colete': 0,
-                'Luvas': 0
-            };
-
-            const dicionarioTraducoes = {
-                'helmet': 'Capacete',
-                'vest': 'Colete',
-                'gloves': 'Luvas'
-            };
+            const contagem = {}
 
             infracoes.forEach(log => {
                 let esquecidos = log.itens_esquecidos;
@@ -79,16 +39,9 @@
                 }
 
                 if (Array.isArray(esquecidos)) {
-                    esquecidos.forEach(item => {
-                        const itemFormatado = item.toLowerCase().trim();
-                        const nomeTraduzido = dicionarioTraducoes[itemFormatado];
-
-                        if (nomeTraduzido) {
-                            contagem[nomeTraduzido] += 1;
-                        } else {
-                            contagem[itemFormatado] = (contagem[itemFormatado] || 0) + 1;
-                        }
-                    });
+                    esquecidos.forEach(nomeEpi => {
+                        contagem[nomeEpi] = (contagem[nomeEpi]||0) +1
+                    })
                 }
             });
 
@@ -117,12 +70,7 @@
 
             infracoes.forEach(Log => {
                 const nomeDoSetor = Log.Setor ? Log.Setor.nome_setor : 'Setor Deletado / Desconhecido.'
-
-                if (contagem[nomeDoSetor]) {
-                    contagem[nomeDoSetor] += 1
-                } else {
-                    contagem[nomeDoSetor] = 1
-                }
+                contagem[nomeDoSetor] = (contagem[nomeDoSetor]|| 0) +1
 
             })
 
@@ -138,3 +86,69 @@
         }   
     }
 
+
+    exports.relatorioPorCiclo = async (req, res) => {
+    try {
+        const { inicio, fim } = req.query
+
+        if (!inicio || !fim) {
+            return res.status(400).json({ error: 'Informe as datas de início e fim (inicio, fim).' })
+        }
+
+        const logs = await LogAcesso.findAll({
+            where: {
+                createdAt: {
+                    [Op.between]: [new Date(inicio), new Date(fim)]
+                }
+            },
+            include: [{ model: Setor, attributes: ['nome_setor'] }],
+            order: [['createdAt', 'ASC']]
+        })
+
+        const agrupadoPorDia = {}
+        const episMaisEsquecidos = {}
+        const setoresComMaisInfracoes = {}
+
+        logs.forEach(log => {
+            const dia = log.createdAt.toISOString().split('T')[0]
+
+            if (!agrupadoPorDia[dia]) {
+                agrupadoPorDia[dia] = { permitido: 0, negado: 0 }
+            }
+
+            if (log.status_acesso === 'PERMITIDO') {
+                agrupadoPorDia[dia].permitido += 1
+                return
+            }
+
+            agrupadoPorDia[dia].negado += 1
+
+            let esquecidos = log.itens_esquecidos
+            if (typeof esquecidos === 'string') {
+                try { esquecidos = JSON.parse(esquecidos) } catch (e) { esquecidos = [] }
+            }
+            if (Array.isArray(esquecidos)) {
+                esquecidos.forEach(nomeEpi => {
+                    episMaisEsquecidos[nomeEpi] = (episMaisEsquecidos[nomeEpi] || 0) + 1
+                })
+            }
+
+            const nomeDoSetor = log.Setor ? log.Setor.nome_setor : 'Setor não localizado'
+            setoresComMaisInfracoes[nomeDoSetor] = (setoresComMaisInfracoes[nomeDoSetor] || 0) + 1
+        })
+
+        const rankingEpis = Object.keys(episMaisEsquecidos)
+            .map(epi => ({ epi, quantidade: episMaisEsquecidos[epi] }))
+            .sort((a, b) => b.quantidade - a.quantidade)
+
+        const rankingSetores = Object.keys(setoresComMaisInfracoes)
+            .map(setor => ({ setor, quantidade: setoresComMaisInfracoes[setor] }))
+            .sort((a, b) => b.quantidade - a.quantidade)
+
+        return res.status(200).json({ agrupadoPorDia, rankingEpis, rankingSetores })
+
+    } catch (error) {
+        console.error('Erro ao gerar relatório de ciclo:', error)
+        return res.status(500).json({ error: 'Erro interno ao gerar relatório de ciclo.' })
+    }
+}

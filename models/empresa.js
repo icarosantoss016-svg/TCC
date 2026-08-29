@@ -15,6 +15,10 @@ const Empresa = sequelize.define('Empresa',{
         type:DataTypes.STRING,
         allowNull:false,
         unique:true
+    },
+    ramo:{
+        type:DataTypes.STRING,
+        allowNull:false,
     }
 })
 

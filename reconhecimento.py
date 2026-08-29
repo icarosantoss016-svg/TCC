@@ -7,15 +7,18 @@ import argparse
 parser = argparse.ArgumentParser(description=" Controle de EPIs")
 parser.add_argument('--fonte', type=int, default=0)
 parser.add_argument('--setor', type=int, default=1)
+parser.add_argument('--empresa', type=int, required=True)
 parser.add_argument('--url', type=str, default='http://localhost:3000/api/acesso')
 args = parser.parse_args()
 
 INDICE_CAMERA = args.fonte
 ID_DO_SETOR = args.setor
+ID_DA_EMPRESA=args.empresa
 URL_DA_API = args.url
 
 print("="*50)
 print(f" INICIANDO SENSOR DE EPI (MODO GATILHO MANUAL)")
+print(f" Empresa:{ID_DA_EMPRESA}")
 print(f" Setor Designado: {ID_DO_SETOR}")
 print(f" Câmera Física: {INDICE_CAMERA}")
 print(f" Servidor Alvo: {URL_DA_API}")
@@ -52,7 +55,8 @@ while True:
             itens_na_tela.append(nome.lower())
 
         pacote_dados = {
-            "id_camera": ID_DO_SETOR, 
+            "id_setor": ID_DO_SETOR, 
+            "id_empresa": ID_DA_EMPRESA,
             "itens_detectados": itens_na_tela
         }
 

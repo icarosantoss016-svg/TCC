@@ -1,32 +1,47 @@
 const Setor = require('../models/setor')
+const RegraEpi = require ('../models/regraEpi')
+const Empresa = require ('../models/empresa')
 const LogAcesso = require('../models/logAcesso')
 
 exports.verificarAcesso = async (req, res) => {
     try {
-        const { id_camera, itens_detectados } = req.body
-        const setor = await Setor.findByPk(id_camera)
+        const { id_setor,id_empresa, itens_detectados } = req.body
+
+        if(!id_setor|| !id_empresa|| !Array.isArray(itens_detectados)){
+            return res.status(400).json({erro:'Dados incompletos enviados pela câmera.'})
+        }
+
+
+        const setor = await Setor.findOne({
+            where:{id_setor:id_setor}, 
+            include:RegraEpi})
 
         if (!setor) {
-            return res.status(400).json({ erro: 'Sertor e/ou câmera não encontrados.' })
+            return res.status(400).json({ erro: 'Setor não encontrado.' })
         }
+
+        if(setor.id_empresa!==id_empresa){
+            console.warn(`Câmera do setor ${id_setor} informou empresa ${id_empresa}, mas o setor pertence à empresa ${setor.id_empresa}`)
+
+            return res.status(400).json({erro:'Setor não pertence a empresa informada.'})
+            
+        }
+
+        const regrasDoSetor = setor.RegraEpis||[]
 
         let esquecidos = []
-        if (setor.capacete_obrigatorio && !itens_detectados.includes('helmet')) {
-            esquecidos.push('helmet')
-        }
 
-        if (setor.colete_obrigatorio && !itens_detectados.includes('vest')) {
-            esquecidos.push('vest')
+        for (const regra of regrasDoSetor){
+            const epiExigido=regra.nome_Epi.toLowerCase()
+            
+            if(!itens_detectados.includes(epiExigido)){
+                esquecidos.push(regra.nome_exibicao)
+            }
         }
-
-        if (setor.luvas_obrigatorio && !itens_detectados.includes('gloves')) {
-            esquecidos.push('gloves')
-        }
-
         const status = esquecidos.length === 0 ? 'PERMITIDO' : 'NEGADO'
 
-        const novoLog = await LogAcesso.create({
-            id_setor: id_camera,
+        await LogAcesso.create({
+            id_setor: id_setor,
             status_acesso: status,
             itens_esquecidos: esquecidos
         })
