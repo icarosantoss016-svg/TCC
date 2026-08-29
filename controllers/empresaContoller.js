@@ -18,7 +18,8 @@ exports.criarEmpresa= async(req,res)=>{
 
         const novaEmpresa = await Empresa.create({
             nome,
-            cnpj
+            cnpj,
+            ramo
         })
 
         return res.status(201).json({
