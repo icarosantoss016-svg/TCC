@@ -1,6 +1,6 @@
 # Sistema de Controle de Acesso por EPI (Multitenant)
 
-> Trabalho de Conclusão de Curso — Desenvolvimento de Sistemas, SENAI Bahia.
+> Trabalho de Conclusão de Curso, Desenvolvimento de Sistemas, SENAI Bahia.
 
 Sistema de controle de acesso a setores industriais/laboratoriais com base na detecção automática de Equipamentos de Proteção Individual (EPI), usando visão computacional (YOLO). O projeto é **multitenant**: cada empresa cliente define seu próprio ramo de atuação, seus próprios setores e quais EPIs são obrigatórios em cada um, permitindo que, por exemplo, uma indústria exija capacete e luvas, enquanto um laboratório exija máscara e touca, tudo na mesma plataforma.
 
@@ -15,21 +15,21 @@ Sistema de controle de acesso a setores industriais/laboratoriais com base na de
 ## Arquitetura
 
 ```
-┌─────────────────┐      POST /api/acesso      ┌──────────────────┐
-│  reconhecimento  │ ─────────────────────────► │                  │
-│  .py (câmera)    │   {id_setor, id_empresa,   │   API (Node.js)  │
-│  YOLO + OpenCV   │    itens_detectados}       │   Express +      │
-└─────────────────┘                             │   Sequelize      │
-                                                 │                  │
-┌─────────────────┐      login + provisiona     │                  │
-│ instaladorCamera │ ─────────────────────────► │                  │
-│ .py              │   empresa/setor via CNPJ   └────────┬─────────┘
-└─────────────────┘                                      │
-                                                           ▼
-                                                    ┌──────────────┐
-                                                    │   SQLite     │
-                                                    │  (dev/local) │
-                                                    └──────────────┘
+┌──────────────────┐      POST /api/acesso      ┌──────────────────┐
+│  camera/          │ ─────────────────────────► │                  │
+│  reconhecimento.py│   {id_setor, id_empresa,   │   API (Node.js)  │
+│  YOLO + OpenCV     │    itens_detectados}       │   Express +      │
+└──────────────────┘                             │   Sequelize      │
+                                                  │                  │
+┌──────────────────┐      login + provisiona     │                  │
+│ camera/            │ ─────────────────────────► │                  │
+│ instaladorCamera.py│   empresa/setor via CNPJ   └────────┬─────────┘
+└──────────────────┘                                       │
+                                                            ▼
+                                                     ┌──────────────┐
+                                                     │   SQLite     │
+                                                     │  (dev/local) │
+                                                     └──────────────┘
 ```
 
 ## Tecnologias
@@ -49,25 +49,32 @@ Sistema de controle de acesso a setores industriais/laboratoriais com base na de
 ## Estrutura do projeto
 
 ```
-├── config/
-│   └── database.js          # conexão Sequelize com o SQLite
-├── models/                  # Empresa, Setor, Usuario, RegraEpi, LogAcesso
-│   └── index.js              # associações entre os models
-├── controllers/              # regras de negócio de cada entidade
-├── routers/                  # definição das rotas da API
-├── middleware/
-│   └── authMiddleware.js     # validação de token JWT
-├── reconhecimento.py         # script que roda na câmera (loop de detecção)
-├── instaladorCamera.py       # script de provisionamento (roda uma vez por câmera nova)
-├── best.pt                   # modelo YOLO treinado (capacete, colete, luva)
-└── server.js                 # ponto de entrada da aplicação
+├── backend/
+│   ├── config/
+│   │   └── database.js          # conexão Sequelize com o SQLite
+│   ├── models/                  # Empresa, Setor, Usuario, RegraEpi, LogAcesso
+│   │   └── index.js              # associações entre os models
+│   ├── controllers/              # regras de negócio de cada entidade
+│   ├── routers/                  # definição das rotas da API
+│   ├── middleware/
+│   │   └── authMiddleware.js     # validação de token JWT
+│   ├── views/                    # telas EJS (login, dashboard, setores)
+│   ├── package.json
+│   └── server.js                 # ponto de entrada da aplicação
+├── camera/
+│   ├── reconhecimento.py         # script que roda na câmera (loop de detecção)
+│   ├── instaladorCamera.py       # script de provisionamento (roda uma vez por câmera nova)
+│   └── best.pt                   # modelo YOLO treinado (capacete, colete, luva)
+├── frontend/                     # em construção
+├── .gitignore
+└── README.md
 ```
 
 ## Modelo de dados (resumo)
 
 - **Empresa**: `nome`, `cnpj`, `ramo`
-- **Setor**: pertence a uma Empresa; agrupa as câmeras/áreas de acesso
-- **RegraEpi**: define, por setor, quais EPIs são obrigatórios (`nome_Epi`: nome técnico usado na comparação com a detecção, e `nome_exibicao`: nome amigável para relatórios)
+- **Setor**: pertence a uma Empresa, agrupa as câmeras/áreas de acesso
+- **RegraEpi**: define, por setor, quais EPIs são obrigatórios (`nome_Epi`, nome técnico usado na comparação com a detecção, e `nome_exibicao`, nome amigável para relatórios)
 - **Usuario**: possui `perfil` (`ADMIN`, `ADM_EMPRESA`, `USUARIO`) e pertence a uma Empresa
 - **LogAcesso**: histórico de cada verificação de acesso, com status (`PERMITIDO`/`NEGADO`) e itens esquecidos
 
@@ -76,6 +83,7 @@ Sistema de controle de acesso a setores industriais/laboratoriais com base na de
 ### Backend
 
 ```bash
+cd backend
 npm install
 node server.js
 ```
@@ -85,14 +93,16 @@ O servidor sobe em `http://localhost:3000` e sincroniza automaticamente o banco 
 ### Provisionar uma câmera nova
 
 ```bash
+cd camera
 python instaladorCamera.py
 ```
 
-Solicita login de administrador, o CNPJ da empresa cliente e o nome do novo setor, e devolve (ou já inicia) o comando para ligar a câmera daquele setor.
+Solicita login de administrador, o CNPJ da empresa cliente e o nome do novo setor, e devolve (ou já inicia) o comando para ligar a câmera daquele setor. É necessário rodar a partir da pasta `camera/`, já que o script carrega o modelo YOLO (`best.pt`) por um caminho relativo.
 
 ### Rodar o reconhecimento numa câmera já provisionada
 
 ```bash
+cd camera
 python reconhecimento.py --setor <id_setor> --empresa <id_empresa>
 ```
 
