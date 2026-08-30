@@ -8,6 +8,6 @@ router.get('/api/listaEmpresa',authMiddleware,empresaController.listarEmpresas)
 router.post('/api/criarEmpresa',authMiddleware,empresaController.criarEmpresa)
 router.put('/api/atualizarEmpresa/:id',authMiddleware,empresaController.atualizarEmpresa)
 router.delete('/api/deletarEmpresa/:id',authMiddleware, empresaController.deletarEmpresa)
-router.get('/api/empresa/cnpj/:cnpj', authMiddleware, empresaController.buscarEmpresaPorCnpj)
+router.get('/api/empresa/cnpj/:cnpj', authMiddleware, empresaController.buscarEmpresasPorCNPJ)
 
 module.exports= router
