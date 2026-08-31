@@ -1,4 +1,5 @@
 import api from '@/service/api'
+import { ESModulesEvaluator } from 'vite/module-runner'
 
 const state ={
     empresa:[],
@@ -39,7 +40,7 @@ const mutations={
 }
 
 const actions={
-    async fetchEmpresa({commit}){
+    async listaEmpresas({commit}){
         commit('SET_CARREGANDO', true)
         commit ('SET_ERRO', null)
         try {
@@ -70,5 +71,66 @@ const actions={
         }finally{
             commit('SET_CARREGANDO', false)
         }
+    },
+
+    async uppdateEmpresa({commit},empresa){
+        commit('SET_CARREGANDO',true)
+        commit('SET_ERROR',null)
+
+        try {
+            const resposta= await api.put(`/api/atualizarEmpresa/${empresa.id_empresa}`,{
+                nome:empresa.nome,
+                cnpj:empresa.cnpj,
+                ramo:empresa.ramo
+            })
+            commit('UPDATE_EMPRESA',resposta.data)
+        } catch (error) {
+            console.error('Erro ao atualizar empesa:',error)
+            commit('SET_ERROR','Não foi possível atulizar empresa.')    
+        }finally{
+            commit('SET_CARREGANDO',false)
+        }
+    },
+
+    async deletarEmpresa({commit},id_empresa){
+        commit('SET_CARREGANDO',true)
+        commit('SET_ERROR',null)
+
+        try {
+            await api.delete(`/api/deletarEmpresa/${id_empresa}`)
+            commit('DELETE_EMPRESA',id_empresa)
+        } catch (error) {
+            console.error('Erro ao deletar empresa',error)
+            commit('SET_ERROR','Não foi possível deletar a empresa.')
+            
+        }finally{
+            commit('SET_CARREGANDO',false)
+        }
+    },
+
+    async buscarEmpresaCnpj ({commit},empesa){
+        commit ('SET_CARREGANDO', true)
+        commit ('SET_ERROR',null)
+
+        try {
+            const resposta = await api.get(`/api/empresa/cnpj/${empresa.cnpj}`)
+            commit('SET_VITRINES',resposta.data)
+        } catch (error) {
+            console.error('Erro ao buscar empresa:',error)
+            commit('SET_ERRO','Ñão foi possível carregar empresa.')           
+        }finally{
+            commit('SET_CARREGANDO', false)
+        }
     }
+
+
+}
+
+
+export default {
+  namespaced: true,
+  state,
+  getters,
+  mutations,
+  actions
 }
